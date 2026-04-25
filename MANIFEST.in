@@ -1,0 +1,5 @@
+# MANIFEST.in - Exclude C++ sources from SOURCES.txt
+# These files live outside the Python package tree and are compiled
+# directly by setuptools.Extension, so they must not appear in the
+# .egg-info/SOURCES.txt manifest.
+prune lib/src

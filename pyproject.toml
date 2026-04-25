@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0", "pybind11>=2.10", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "logilinux"
+version = "0.1.0"
+description = "Python bindings for LogiLinux - Logitech Creator devices on Linux"
+readme = "README.md"
+license = { text = "GPLv3" }
+authors = [
+    { name = "LogiLinux Contributors" },
+]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/your-username/logilinux"
+Repository = "https://github.com/your-username/logilinux"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["logilinux"]
+namespaces = false
+
+[tool.setuptools.package-data]
+logilinux = ["_logilinux*.so", "_logilinux*.pyd"]

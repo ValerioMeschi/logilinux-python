@@ -1,3 +1,14 @@
 ref/*
 DEVELOPMENT_PLAN.md
 build/
+
+# Python build & venv artifacts
+.venv/
+dist/
+*.egg-info/
+__pycache__/
+*.pyc
+*.so
+
+# pip install -e . builds here
+**/__pycache__/

@@ -1,111 +1,123 @@
-# LogiLinux - Logitech Device Library for Linux
+# LogiLinux
 
-A C++ library and tools for interfacing with Logitech Creator devices on Linux, including the MX Dialpad and MX Keypad. This was made for LauzHack 2025.
+Python bindings for Logitech Creator devices (MX Creative Console, MX Dialpad) on Linux.
 
-## What is This?
+## Requirements
 
-LogiLinux provides a clean C++ library (liblogilinux) for working with Logitech input devices on Linux. It handles device discovery, event monitoring, and provides a type-safe API for building applications.
+- Linux with `/dev/input/event*` and `/dev/hidraw*` access
+- Python 3.8+
+- `libjpeg-dev` and `giflib-dev` (optional, for GIF/animation support)
 
-## Quick Start
+## Installation
 
-### Building
-
-```bash
-./build.sh
+```sh
+pip install logilinux
 ```
 
-Or manually:
+### From source
 
-```bash
-mkdir build && cd build
-cmake ..
-make -j$(nproc)
+```sh
+git clone https://github.com/your-username/logilinux.git
+cd logilinux
+pip install .
 ```
 
-### Running Examples
+## Usage
 
-```bash
-sudo ./build/examples/dialpad-example
-sudo ./build/examples/mx-keypad-example  
-sudo ./build/examples/volume-example
+### MX Creative Console (Keypad)
+
+```python
+from logilinux import Keypad
+from PIL import Image
+import io
+
+# Connect to device
+keypad = Keypad()
+keypad.initialize()
+
+# Generate a JPEG in memory
+img = Image.new("RGB", (118, 118), (255, 0, 0))
+buf = io.BytesIO()
+img.save(buf, format="JPEG", quality=85)
+
+# Display on key 0
+keypad.set_key_image(0, buf.getvalue())
+
+# Handle button presses
+keypad.on_button(lambda button, pressed: print(button, pressed))
+
+# Start event loop
+keypad.start()
+input("Press Enter to exit\n")
+keypad.stop()
 ```
 
-## Key Discovery
+### MX Dialpad
 
-The MX Dialpad works as a standard Linux input device and sends events through the input subsystem. When you rotate the dial, it sends:
+```python
+from logilinux import Dialpad
 
-- REL_HWHEEL (axis 6): Low-resolution steps (1-6 units per tick)
-- REL_MISC (axis 12): High-resolution angle (120 units per degree)
-- Positive values = clockwise, negative = counter-clockwise
+dialpad = Dialpad()
 
-## Using the Library
-
-### Simple Example
-
-```cpp
-#include <logilinux/logilinux.h>
-#include <logilinux/events.h>
-
-void onEvent(LogiLinux::EventPtr event) {
-    if (auto rotation = std::dynamic_pointer_cast<LogiLinux::RotationEvent>(event)) {
-        std::cout << "Rotated: " << rotation->delta << " steps" << std::endl;
-    }
-    if (auto button = std::dynamic_pointer_cast<LogiLinux::ButtonEvent>(event)) {
-        std::cout << "Button " << button->button_code << (button->pressed ? " pressed" : " released") << std::endl;
-    }
-}
-
-int main() {
-    LogiLinux::Library lib;
-    auto device = lib.findDevice(LogiLinux::DeviceType::DIALPAD);  // or MX_KEYPAD
-
-    device->setEventCallback(onEvent);
-    device->startMonitoring();
-
-    return 0;
-}
+dialpad.on_rotate(lambda delta, high_res, rot_type: print(f"Rotated {delta}"))
+dialpad.on_button(lambda button, pressed: print(f"{button.name} {'pressed' if pressed else 'released'}"))
+dialpad.start()
+input("Press Enter to exit\n")
+dialpad.stop()
 ```
 
-Compile with:
+### Device discovery
 
-```bash
-g++ -std=c++17 myapp.cpp $(pkg-config --cflags --libs logilinux)
+```python
+from logilinux import discover_devices, DeviceType
+
+for dev in discover_devices():
+    info = dev.get_info()
+    print(f"{info.name} ({info.device_path})")
 ```
 
-See `lib/README.md` for full API documentation.
+## API
 
-## Prerequisites
+### High-level classes
 
-```bash
-sudo apt-get install build-essential cmake libudev-dev
-sudo dnf install gcc-c++ cmake libudev-devel
-sudo pacman -S base-devel cmake systemd
-```
+| Class | Device | Events |
+|-------|--------|--------|
+| `Dialpad` | MX Dialpad | Rotation, buttons |
+| `Keypad`  | MX Creative Console | Buttons, LCD display |
+
+### Keypad LCD methods
+
+- `initialize()` — prepare the LCD screen
+- `set_key_image(key_index, jpeg_bytes)` — display JPEG on a key (118×118)
+- `set_key_gif(key_index, gif_bytes)` — play a GIF on a key
+- `set_screen_image(jpeg_bytes)` — full-screen JPEG (434×434)
+- `set_screen_gif(gif_bytes)` — full-screen GIF animation
+- `stop_all_animations()` — stop all running animations
+
+### Constants (on `Keypad` instance)
+
+- `SCREEN_WIDTH` = 434
+- `SCREEN_HEIGHT` = 434
+- `KEY_SIZE` = 118
+- `GAP_SIZE` = 40
+
+### Enums
+
+- `DeviceType.DIALPAD`, `DeviceType.MX_KEYPAD`
+- `RotationType.DIAL`, `RotationType.DIAL_BREATH`, `RotationType.KEY_ROTATION`
+- `EventType.ROTATION`, `EventType.BUTTON`
+- `DialpadButton` — named buttons for MX Dialpad
+- `MXKeypadButton` — named buttons for MX Creative Console (grid 0–8, P1_LEFT, P2_RIGHT)
 
 ## Permissions
 
-To avoid using sudo:
+Accessing HID devices typically requires root or udev rules. To run without `sudo`, create a udev rule:
 
-```bash
-sudo bash -c 'cat > /etc/udev/rules.d/99-logitech.rules << EOF
-SUBSYSTEM=="hidraw", KERNEL=="hidraw*", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="bc00", MODE="0666"
-EOF'
-
-sudo udevadm control --reload-rules
-sudo udevadm trigger
+```udev
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="046d", MODE="0666"
+SUBSYSTEM=="input", ATTRS{idVendor}=="046d", MODE="0666"
 ```
 
-## Supported Devices
+## License
 
-### MX Dialpad
-- Model: Logitech MX Dialpad  
-- Vendor ID: `046d` (Logitech)
-- Product ID: `bc00`
-- Features: Rotation, button press, high-resolution scrolling
-- Protocol: HID++ 4.5
-
-### MX Keypad
-- Model: Logitech MX Creative Console / MX Keypad
-- Vendor ID: `046d` (Logitech) 
-- Features: 9 programmable LCD buttons, navigation buttons
-- Capabilities: Button events, LCD image display, JPEG upload
+GPLv3
