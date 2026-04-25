@@ -25,3 +25,8 @@ namespaces = false
 
 [tool.setuptools.package-data]
 logilinux = ["_logilinux*.so", "_logilinux*.pyd"]
+
+[tool.uv.workspace]
+members = [
+    "examples",
+]

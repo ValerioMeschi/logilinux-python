@@ -1,4 +1,4 @@
-# LogiLinux
+# LogiLinux - Python
 
 Python bindings for Logitech Creator devices (MX Creative Console, MX Dialpad) on Linux.
 

@@ -35,7 +35,8 @@ def generate_color_jpeg(width: int, height: int, r: int, g: int, b: int) -> byte
         img.save(buf, format="JPEG", quality=85)
         return buf.getvalue()
     except ImportError:
-        pass
+        raise Exception("Pillow is not available, cannot generate JPEG")
+
 
 
 # Flag to keep the script running
