@@ -8,7 +8,7 @@ Python bindings for Logitech Creator devices (MX Creative Console, MX Dialpad) o
 - Python 3.8+
 - `libjpeg-dev` and `giflib-dev` (optional, for GIF/animation support)
 
-## Installation
+## Installation (PyPI package WIP)
 
 ```sh
 pip install logilinux
