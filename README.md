@@ -1,6 +1,6 @@
 # LogiLinux - Python
 
-Python bindings for Logitech Creator devices (MX Creative Console, MX Dialpad) on Linux.
+Python bindings for the logilinux driver / Logitech Creator devices (MX Creative Console, MX Dialpad) on Linux.
 
 ## Requirements
 
